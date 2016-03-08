@@ -25,33 +25,42 @@
  |  limitations under the License.                                          |
  ----------------------------------------------------------------------------
 
+  1 March 2016
+
 */
 
-module.exports = function(worker, params) {
+module.exports = function() {
 
-  // establish the connection to Cache database
-
-  var DocumentStore = require('ewd-document-store');
-  var interface = require('cache');
-  worker.db = new interface.Cache();
-
-  params = params || {};
-  if (!params.path) params.path = '/opt/cache/mgr';
-  if (!params.username) params.username = '_SYSTEM';
-  if (!params.password) params.password = 'SYS';
-  if (!params.namespace) params.namespace = 'USER';
-  if (!params.charset) params.charset = 'UTF-8';
-  params.lock = 0;
-
-  var status = worker.db.open(params);
-
-  worker.on('stop', function() {
-    this.db.close();
-    worker.emit('dbClosed');
+  this.on('dbOpened', function(status) {
+    console.log('Cache was opened by worker ' + process.pid + ': status = ' + JSON.stringify(status));
   });
 
-  worker.emit('dbOpened', status);
-  worker.documentStore = new DocumentStore(worker.db);
-  worker.emit('DocumentStoreStarted');
-};
+  this.on('start', function(isFirst) {
+    var connectCacheTo = require('ewd-qoper8-cache');
+    connectCacheTo(this);
+    // this.documentStore has now been instantiated
 
+    if (isFirst) {
+      var log = new this.documentStore.DocumentNode('ewdTestLog');
+      log.delete();
+    }
+  });
+
+  this.on('message', function(messageObj, send, finished) {
+    
+    var results = {
+      youSent: messageObj,
+      workerSent: 'hello from worker ' + process.pid,
+      time: new Date().toString()
+    };
+    var log = new this.documentStore.DocumentNode('ewdTestLog');
+    var ix = log.increment();
+    log.$(ix).setDocument(results);
+    finished(results);
+  });
+
+  this.on('stop', function() {
+    console.log('Connection to Cache closed');
+  });
+  
+};

@@ -1,13 +1,13 @@
 {
   "name": "ewd-qoper8-cache",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Integrates the InterSystems Cache database with ewd-qoper8 worker processes",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "ewd-globals": ""
+    "ewd-document-store": ""
   },
   "repository": {
     "type": "git",

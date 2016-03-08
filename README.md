@@ -10,7 +10,9 @@ Google Group for discussions, support, advice etc: [http://groups.google.co.uk/g
 
 ## ewd-qoper8-cache
 
-This module may be used to simplifiy the integration of the InterSystems Cache database with ewd-qoper8 worker process modules
+This module may be used to simplifiy the integration of the InterSystems Cache database with ewd-qoper8 worker process modules. 
+It additionally loads the ewd-document-store module to provide a very powerful and natural JavaScript interface to the underlying
+Global Storage database engine within Cache.
 
 ## Installing
 
@@ -20,7 +22,7 @@ This module may be used to simplifiy the integration of the InterSystems Cache d
 
 This module should be used with the start event handler of your ewd-qoper8 worker module, eg:
 
-    worker.on('start', function(isFirst) {
+    this.on('start', function(isFirst) {
       var connectCacheTo = require('ewd-qoper8-cache');
       connectCacheTo(this);
     });
@@ -38,7 +40,7 @@ This will open a connection to a Cache database using the following default para
 If you want to modify any of these parameters, simply specify any differences and pass the params object as the second
 argument, eg to change just the namespace:
 
-    worker.on('start', function(isFirst) {
+    this.on('start', function(isFirst) {
       var connectCacheTo = require('ewd-qoper8-cache');
       var params = {
         namespace: 'GOLD'
@@ -46,26 +48,33 @@ argument, eg to change just the namespace:
       connectCacheTo(this, params);
     });
 
-ewd-qoper8-cache will load and initialise the ewd-globals module, creating a globalStore object within your worker.
+ewd-qoper8-cache will load and initialise the ewd-document-store module, creating a DocumentStore object within your worker.
 
 ewd-qoper8-cache takes responsibility for handling the 'stop' event, but provides you with 3 new events that you may handle:
 
 - dbOpened: fires after the connection to Cache is opened within a worker process
 - dbClosed: fires after the connection to Cache is closed within a worker process.  The worker exits immediately after this event
-- globalStoreStarted: fires after the globalStore object has been instantiated.  This is a good place to handle globalStore events, 
- for example to maintain global indices
+- DocumentStoreStarted: fires after the DocumentStore object has been instantiated.  This is a good place to handle DocumentStore events, 
+ for example to maintain Document indices
 
 The dbOpened event provides you with a single status object argument, allowing you to determine the success (or not) of
 opening the connection to Cache, so you could add the following handler in your worker module, for example:
 
-    worker.on('dbOpened', function(status) {
+    this.on('dbOpened', function(status) {
       console.log('Cache was opened by worker ' + process.pid + ': status = ' + JSON.stringify(status));
     });
 
 
-The dbClosed and globalStoreStarted events provide no arguments.
+The dbClosed and DocumentStoreStarted events provide no arguments.
 
-For an example, see [https://github.com/robtweed/ewd-globals/blob/master/lib/tests/CacheModule2.js](https://github.com/robtweed/ewd-globals/blob/master/lib/tests/CacheModule2.js)
+## Example
+
+See in the /examples directory.
+
+cache-express,js is an example Express & ewd-qoper8 master process scripts. gtm-module1.js is
+the associated worker module which connects to and uses Cache as the database providing the Document Store.
+
+Use these as a starting point for your own system.
 
 ## License
 

@@ -25,33 +25,28 @@
  |  limitations under the License.                                          |
  ----------------------------------------------------------------------------
 
+  1 March 2016
+
 */
 
-module.exports = function(worker, params) {
+var express = require('express');
+var bodyParser = require('body-parser');
+var qoper8 = require('ewd-qoper8');
+var app = express();
+app.use(bodyParser.json());
 
-  // establish the connection to Cache database
+var q = new qoper8.masterProcess();
 
-  var DocumentStore = require('ewd-document-store');
-  var interface = require('cache');
-  worker.db = new interface.Cache();
-
-  params = params || {};
-  if (!params.path) params.path = '/opt/cache/mgr';
-  if (!params.username) params.username = '_SYSTEM';
-  if (!params.password) params.password = 'SYS';
-  if (!params.namespace) params.namespace = 'USER';
-  if (!params.charset) params.charset = 'UTF-8';
-  params.lock = 0;
-
-  var status = worker.db.open(params);
-
-  worker.on('stop', function() {
-    this.db.close();
-    worker.emit('dbClosed');
+app.post('/qoper8', function (req, res) {
+  q.handleMessage(req.body, function(response) {
+    res.send(response);
   });
+});
 
-  worker.emit('dbOpened', status);
-  worker.documentStore = new DocumentStore(worker.db);
-  worker.emit('DocumentStoreStarted');
-};
+q.on('started', function() {
+  this.worker.module = 'ewd-qoper8-cache/examples/cache-module1';
+  app.listen(8080);
+});
+
+q.start();
 
